@@ -5,6 +5,8 @@ using PeopleApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Using Dependency Injection to Get the settings from the AppSettings to be used
+// In the DBContext
 // Add MongoDB settings from configuration
 builder.Services.Configure<MongoDbSettings>(builder.Configuration.GetSection("MongoSettings"));
 

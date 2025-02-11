@@ -8,14 +8,21 @@
 
 <h3>DataTable</h3>
 
-<input @bind="newData.Name" placeholder="Name" />
-<input @bind="newData.Value" placeholder="Value" />
-<button @onclick="AddData">Add Data</button>
-<button @onclick="UpdateData">Update Data</button>
+<div>
+    <input class="row" @bind="newData.Id" placeholder="Id" readonly />
+    <input class="row" @bind="newData.Name" placeholder="Name" />
+    <input class="row" @bind="newData.Value" placeholder="Value" />
+    <div class="row">
+        <button class="col" @onclick="AddData">Add Data</button>
+        <button class="col" @onclick="UpdateData">Update Data</button>
+    </div>
+</div>
+
 
 <table>
     <thead>
         <tr>
+            <th>Id</th>
             <th>Name</th>
             <th>Value</th>
             <th>Updated At</th>
@@ -26,6 +33,7 @@
         @foreach (var data in dataList)
         {
             <tr>
+                <td>@data.Id</td>
                 <td>@data.Name</td>
                 <td>@data.Value</td>
                 <td>@data.UpdatedAt.ToString("yyyy-MM-dd HH:mm:ss")</td>
@@ -102,6 +110,7 @@
         var response = await httpClient.PostAsJsonAsync("https://localhost:7145/api/db/deleteData", id);
         if (response.IsSuccessStatusCode)
         {
+            // used for testing sending to the console
             await JS.InvokeVoidAsync("consoleLog", "Data has been deleted");
         }
     }

@@ -8,7 +8,7 @@ namespace PeopleApi.Controllers
         public static void Connection()
         {
 
-            const string connectionUri = "mongodb+srv://bennioncraig:Mxja5RWxGkQksI4m@learndbcluster.xtfhe.mongodb.net/?retryWrites=true&w=majority&appName=LearnDbCluster";
+            const string connectionUri = "AddConnection";
 
             var settings = MongoClientSettings.FromConnectionString(connectionUri);
 

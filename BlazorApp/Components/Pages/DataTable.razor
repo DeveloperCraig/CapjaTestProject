@@ -1,0 +1,121 @@
+﻿@page "/DataTable"
+@using Microsoft.AspNetCore.SignalR.Client
+@using Microsoft.JSInterop
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+
+<h3>DataTable</h3>
+
+<input @bind="newData.Name" placeholder="Name" />
+<input @bind="newData.Value" placeholder="Value" />
+<button @onclick="AddData">Add Data</button>
+<button @onclick="UpdateData">Update Data</button>
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Value</th>
+            <th>Updated At</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var data in dataList)
+        {
+            <tr>
+                <td>@data.Name</td>
+                <td>@data.Value</td>
+                <td>@data.UpdatedAt.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                <td>
+                    <button @onclick="() => EditData(data)">Edit</button>
+                    <button @onclick="() => DeleteData(data.Id)">Delete</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private HubConnection hubConnection;
+    private List<MyData> dataList = new List<MyData>();
+    private MyData newData = new MyData();
+
+    protected override async Task OnInitializedAsync()
+    {
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(Navigation.ToAbsoluteUri("https://localhost:7145/myHub"))
+            .Build();
+
+        hubConnection.On<List<MyData>>("UpdateData", (data) =>
+        {
+            // Log received data
+            Console.WriteLine("Received data: " + data);
+            dataList = data;
+            InvokeAsync(StateHasChanged);
+        });
+
+        await hubConnection.StartAsync();
+
+        // Fetch initial data from the database
+        await FetchDataFromDb();
+    }
+
+    private async Task FetchDataFromDb()
+    {
+        var httpClient = new HttpClient();
+        var response = await httpClient.GetAsync("https://localhost:7145/api/db/getData");
+        if (response.IsSuccessStatusCode)
+        {
+            dataList = await response.Content.ReadFromJsonAsync<List<MyData>>();
+            StateHasChanged();
+        }
+    }
+
+    // Adds data to DB
+    private async Task AddData()
+    {
+        var httpClient = new HttpClient();
+        newData.UpdatedAt = DateTime.UtcNow;
+        var response = await httpClient.PostAsJsonAsync("https://localhost:7145/api/db/addData", newData);
+        if (response.IsSuccessStatusCode)
+        {
+            newData = new MyData();
+        }
+    }
+
+    // Sends update request
+    private async Task UpdateData()
+    {
+        var httpClient = new HttpClient();
+        newData.UpdatedAt = DateTime.UtcNow;
+        var response = await httpClient.PostAsJsonAsync("https://localhost:7145/api/db/updateData", newData);
+        
+    }
+
+    // Sends delete request with Id to delete
+    private async Task DeleteData(string id)
+    {
+        var httpClient = new HttpClient();
+        var response = await httpClient.PostAsJsonAsync("https://localhost:7145/api/db/deleteData", id);
+        if (response.IsSuccessStatusCode)
+        {
+            await JS.InvokeVoidAsync("consoleLog", "Data has been deleted");
+        }
+    }
+
+    // This will cause the Data to Update in real time but will only update when you press the update button
+    private void EditData(MyData data)
+    {
+        newData = data;
+    }
+
+    // Safely Disposses the connection
+    public async ValueTask DisposeAsync()
+    {
+        await hubConnection.DisposeAsync();
+    }
+}
+

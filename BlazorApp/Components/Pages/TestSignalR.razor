@@ -1,0 +1,46 @@
+﻿@page "/test-signalr"
+@using Microsoft.AspNetCore.SignalR.Client
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<h3>SignalR Test</h3>
+
+<button @onclick="SendTestMessage">Send Test Message</button>
+
+<ul>
+    @foreach (var message in messages)
+    {
+        <li>@message</li>
+    }
+</ul>
+
+@code {
+    private HubConnection hubConnection;
+    private List<string> messages = new List<string>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(Navigation.ToAbsoluteUri("https://localhost:7145/myHub"))
+            .Build();
+
+        // This will look out for any information coming from the 'ReceiveMessage' Method part of the SignalR
+        hubConnection.On<string>("ReceiveMessage", (message) =>
+        {
+            messages.Add(message);
+            InvokeAsync(StateHasChanged);
+        });
+
+        await hubConnection.StartAsync();
+    }
+
+    private async Task SendTestMessage()
+    {
+        await hubConnection.SendAsync("SendMessage", "Test message from Blazor");
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await hubConnection.DisposeAsync();
+    }
+}

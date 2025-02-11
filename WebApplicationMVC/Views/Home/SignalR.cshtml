@@ -1,0 +1,50 @@
+﻿<div class="container">
+    <div class="row p-1">
+        <div class="col-1">Message</div>
+        <div class="col-5"><input type="text" id="messageInput" /></div>
+    </div>
+    <div class="row p-1">
+        <div class="col-6 text-end">
+            <input type="button" id="sendButton" value="Send Message" />
+        </div>
+    </div>
+    <div class="row p-1">
+        <div class="col-6">
+            <hr />
+        </div>
+    </div>
+    <div class="row p-1">
+        <div class="col-6">
+            <ul id="messagesList"></ul>
+        </div>
+    </div>
+</div>
+<script src="~/js/signalr/signalr.min.js"></script>
+<script>
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl("https://localhost:7145/myHub")
+        .build();
+
+    // This will look out for any information coming from the 'ReceiveMessage' Method part of the SignalR
+    connection.on("ReceiveMessage", (message) => {
+        const li = document.createElement("li");
+        li.textContent = message;
+        document.getElementById("messagesList").appendChild(li);
+    });
+
+    // Starts connection if it doesnt connect then the send button is disabled
+    connection.start()
+        .then(() => {
+            document.getElementById("sendButton").disabled = false;
+        })
+        .catch(err => console.error("SignalR connection error: ", err));
+
+    // Grabs the message from the input and then sends it to the 'SendMessage' which will
+    // Then send the message to all clients
+    document.getElementById("sendButton").addEventListener("click", function (event) {
+        const message = document.getElementById("messageInput").value;
+        connection.invoke("SendMessage", message)
+            .catch(err => console.error("Error sending message: ", err));
+        event.preventDefault();
+    });
+</script>

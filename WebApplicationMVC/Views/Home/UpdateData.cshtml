@@ -1,0 +1,152 @@
+﻿<div class="container">
+    <div class="row p-1">
+        <div class="col-2">Id</div>
+        <div class="col-5"><input type="text" id="idInput" readonly /></div>
+    </div>
+    <div class="row p-1">
+        <div class="col-2">Name</div>
+        <div class="col-5"><input type="text" id="nameInput" /></div>
+    </div>
+    <div class="row p-1">
+        <div class="col-2">Value</div>
+        <div class="col-5"><input type="text" id="valueInput" /></div>
+    </div>
+    <div class="row">
+        <input class="col" type="button" id="addButton" value="Add Data" />
+        <input class="col" type="button" id="deleteButton" value="Delete Data" />
+        <input class="col" type="button" id="updateButton" value="Update Data" />
+    </div>
+    <div class="row p-1">
+        <hr />
+    </div>
+    <div class="row p-1">
+        <div class="col-6">
+            <table id="dataTable" class="table">
+                <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Name</th>
+                        <th>Value</th>
+                        <th>Updated At</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="dataList"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="~/js/signalr/signalr.min.js"></script>
+    <script>
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("https://localhost:7145/myHub")
+            .build();
+
+        let selectedData = {};
+
+        // Function to fetch the latest data from the database
+        function fetchData() {
+            fetch("https://localhost:7145/api/db/getData")
+                .then(response => response.json())
+                .then(data => {
+                    const dataList = document.getElementById("dataList");
+                    dataList.innerHTML = '';
+                    data.forEach(item => {
+                        const row = document.createElement("tr");
+                        row.innerHTML = `
+                            <td>${item.id}</td>
+                            <td>${item.name}</td>
+                            <td>${item.value}</td>
+                            <td>${item.updatedAt}</td>
+                            <td>
+                                <button onclick="editData('${item.id}', '${item.name}', '${item.value}')">Edit</button>
+                                <button onclick="deleteData('${item.id}')">Delete</button>
+                            </td>
+                        `;
+                        dataList.appendChild(row);
+                    });
+                })
+                .catch(err => console.error("Error fetching data: ", err));
+        }
+
+        // Fetch the latest data when the page loads
+        document.addEventListener("DOMContentLoaded", fetchData);
+
+        // Lissens to the UpdateData which will get any new data from the DB
+        connection.on("UpdateData", (data) => {
+            const dataList = document.getElementById("dataList");
+            dataList.innerHTML = '';
+            data.forEach(item => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${item.id}</td>
+                    <td>${item.name}</td>
+                    <td>${item.value}</td>
+                    <td>${item.updatedAt}</td>
+                    <td>
+                        <button onclick="editData('${item.id}', '${item.name}', '${item.value}')">Edit</button>
+                        <button onclick="deleteData('${item.id}')">Delete</button>
+                    </td>
+                `;
+                dataList.appendChild(row);
+            });
+        });
+
+        //Added to catch errors
+        connection.start().catch(err => console.error("SignalR connection error: ", err));
+
+        //Add Data to DB
+        document.getElementById("addButton").addEventListener("click", function (event) {
+            const name = document.getElementById("nameInput").value;
+            const value = document.getElementById("valueInput").value;
+            fetch("https://localhost:7145/api/db/addData", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name: name, value: value })
+            }).catch(err => console.error("Error adding data: ", err));
+            event.preventDefault();
+        });
+
+        // Update Data in collection
+        document.getElementById("updateButton").addEventListener("click", function (event) {
+            const name = document.getElementById("nameInput").value;
+            const value = document.getElementById("valueInput").value;
+            fetch("https://localhost:7145/api/db/updateData", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ id: selectedData.id, name: name, value: value })
+            }).catch(err => console.error("Error updating data: ", err));
+            event.preventDefault();
+        });
+
+        // Deletes Data from Collection
+        document.getElementById("deleteButton").addEventListener("click", function (event) {
+            const id = selectedData.id;
+            fetch("https://localhost:7145/api/db/deleteData", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(id)
+            }).catch(err => console.error("Error deleting data: ", err));
+            event.preventDefault();
+        });
+
+        // Populates text boxes 
+        function editData(id, name, value) {
+            selectedData.id = id;
+            document.getElementById("idInput").value = id;
+            document.getElementById("nameInput").value = name;
+            document.getElementById("valueInput").value = value;
+        }
+
+        //This will just assign the selected data then press the deleteButton
+        function deleteData(id) {
+            selectedData.id = id;
+            document.getElementById("deleteButton").click();
+        }
+    </script>

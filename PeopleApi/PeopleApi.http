@@ -1,0 +1,43 @@
+@PeopleApi_HostAddress = http://localhost:5235
+@PeopleApi_SercureHostAddress = https://localhost:7145
+
+GET {{PeopleApi_HostAddress}}/api/Db/getData
+###
+
+GET {{PeopleApi_SercureHostAddress}}/api/Db/getData
+###
+
+POST {{PeopleApi_SercureHostAddress}}/api/Db/addData
+Content-Type: application/json
+{
+    "Id": "9",
+    "Name": "newTesting",
+    "Value": "This a quick Test",
+    "UpdatedAt": "2025-02-09T00:00:00Z"
+}
+###
+
+POST {{PeopleApi_SercureHostAddress}}/api/Db/addData
+Content-Type: application/json
+{
+    "Id": "9",
+    "Name": "newTesting",
+    "Value": "This a quick Test",
+    "UpdatedAt": "2025-02-09T00:00:00Z"
+}
+###
+
+POST {{PeopleApi_SercureHostAddress}}/api/Db/deleteData
+Content-Type: application/json
+    "67aa79335d204908ab477c67"
+###
+
+POST {{PeopleApi_SercureHostAddress}}/api/Db/updateData
+Content-Type: application/json
+{
+    "Id": "67a937771d3ce59051df11bc",
+    "Name": "NewFromhttp",
+    "Value": "This a quick Test",
+    "UpdatedAt": "2025-02-09T00:00:00Z"
+}
+###
